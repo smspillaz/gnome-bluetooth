@@ -67,6 +67,8 @@ built_sources += gnome.gdbus_codegen(
   interface_prefix: 'org.bluez'
 )
 
+opt_dep_udev = dependency('libudev', required: false)
+
 deps = [
   gtk_dep,
   m_dep,
@@ -74,13 +76,17 @@ deps = [
   dependency('gmodule-2.0'),
   dependency('libcanberra-gtk3'),
   dependency('libnotify', version: '>= 0.7.0'),
-  dependency('libudev')
+  opt_dep_udev
 ]
 
 cflags = [
   '-DPKGDATADIR="@0@"'.format(gnomebt_pkgdatadir),
   '-DG_LOG_DOMAIN="Bluetooth"'
 ]
+
+if opt_dep_udev.found()
+  cflags += '-DHAVE_UDEV=1'
+endif
 
 symbol_map = join_paths(meson.current_source_dir(), meson.project_name() + '.map')
 
@@ -110,6 +116,12 @@ libgnome_bluetooth_dep = declare_dependency(
   dependencies: deps
 )
 
+if opt_dep_udev.found()
+  libgnome_bluetooth_requires_private = 'libudev'
+else
+  libgnome_bluetooth_requires_private = ''
+endif
+
 pkg.generate(
   libraries: libgnome_bluetooth,
   version: gnomebt_version,
@@ -121,7 +133,7 @@ pkg.generate(
     'gio-2.0',
     'gtk+-3.0'
   ],
-  requires_private: 'libudev',
+  requires_private: libgnome_bluetooth_requires_private,
   variables: 'exec_prefix=' + gnomebt_libexecdir,
   install_dir: join_paths(get_option('libdir'), 'pkgconfig')
 )

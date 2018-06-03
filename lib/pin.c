@@ -28,7 +28,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <glib.h>
+#ifdef HAVE_UDEV
 #include <libudev.h>
+#endif
 #include <bluetooth-enums.h>
 #include <bluetooth-utils.h>
 
@@ -40,6 +42,9 @@
 char *
 oui_to_vendor (const char *oui)
 {
+#ifndef HAVE_UDEV
+	return NULL;
+#else
 	struct udev *udev = NULL;
 	struct udev_hwdb *hwdb = NULL;
 	struct udev_list_entry *list, *l;
@@ -83,6 +88,7 @@ bail:
 	g_clear_pointer (&udev, udev_unref);
 
 	return vendor;
+#endif
 }
 
 #define TYPE_IS(x, r) {				\
